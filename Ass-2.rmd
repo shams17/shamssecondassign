@@ -1,0 +1,313 @@
+---
+title: "Ass-2"
+author: "shamanth"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r,warning=FALSE,message=FALSE,include=FALSE,echo=FALSE}
+# loading libraries
+# if the below libraries are not installed in your system, please install them
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(caret)
+library(knitr)
+library(corrplot)
+library(plotly)
+library(correlationfunnel)
+library(GGally)
+library(e1071)
+#library(rattle)
+```
+
+
+
+```{r}
+cisum <- read.csv("pml-training.csv", stringsAsFactors = F,na.strings = c("","NA","#DIV/0!"))
+goink <- read.csv("pml-testing.csv", stringsAsFactors = F,na.strings = c("","NA","#DIV/0!"))
+dim(cisum); dim(goink)
+```
+  
+ 
+
+```{r}
+#for reproducability
+set.seed(102)
+uliud <- createDataPartition(cisum$classe, p = 0.8, list = F)
+nmdbj <- cisum[-uliud,]
+cisum <- cisum[uliud,]
+dim(cisum); dim(nmdbj)
+```
+  
+
+```{r}
+table(cisum$classe)/nrow(cisum)
+```
+
+
+```{r}
+ajar <- sapply(select(cisum,names(cisum)[grepl("_belt",names(cisum))]),
+                    function(x) sum(is.na(x)))
+ajar
+```
+
+```{r}
+epicalyx <- sapply(select(cisum,names(cisum)[grepl("_arm",names(cisum))]),
+                   function(x) sum(is.na(x)))
+epicalyx
+```  
+
+
+```{r}
+executrix <- sapply(select(cisum,
+                              names(cisum)[grepl("_forearm",names(cisum))]),
+                       function(x) sum(is.na(x)))
+executrix
+```  
+
+```{r}
+econobox <- sapply(select(cisum,
+                               names(cisum)[grepl("_dumbbell",names(cisum))]),
+                        function(x) sum(is.na(x)))
+econobox
+``` 
+
+```{r}
+eaux <- c(names(ajar[ajar != 0]), 
+                  names(epicalyx[epicalyx != 0]),
+                  names(executrix[executrix != 0]),
+                  names(econobox[econobox != 0]))
+length(eaux)
+```
+
+```{r}
+#dropping the cols
+embox <- tbl_df(cisum %>% 
+                      select(-eaux,
+                             -c(X,user_name, raw_timestamp_part_1, 
+                                raw_timestamp_part_2, cvtd_timestamp, 
+                                new_window,num_window)))
+embox$classe <- as.factor(embox$classe)
+embox[,1:52] <- lapply(embox[,1:52],as.numeric)
+dim(embox)
+```
+
+```{r,fig.height=10,fig.width=10}
+falsify <- cor(select(embox, -classe))
+diag(falsify) <- 0
+falsify <- which(abs(falsify)>0.8,arr.ind = T)
+falsify <- unique(row.names(falsify))
+corrplot(cor(select(embox,falsify)),
+         type="upper", order="hclust",method = "number")
+```
+
+```{r}
+# binarizing data
+#correlationfunnel website: https://business-science.github.io/correlationfunnel/
+jarklin <- embox %>% binarize(n_bins = 4, thresh_infreq = 0.01)
+```
+
+```{r,fig.align="center",fig.width=8,fig.height=10}
+audiolect <- jarklin %>% correlate(target = classe__A) 
+audiolect %>% plot_correlation_funnel(interactive = T,limits = c(-0.5,0.5))
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# this section is to find the top features for this classe which are not correlated with others
+ajorken <- head(audiolect %>% mutate(corr = abs(correlation)) %>% 
+  arrange(desc(corr)) %>% select(feature) %>% unique(),20)
+ajorken$feature[which(ajorken$feature %in% falsify)]
+```
+
+```{r,fig.align="center",fig.width=8,fig.height=10}
+cellordion <- jarklin %>% correlate(target = classe__B)
+cellordion %>% plot_correlation_funnel(interactive = T,limits = c(-0.5,0.5))
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+# this section is to find the top features for this classe which are not correlated with others
+gimmerizeds <- head(cellordion %>% mutate(corr = abs(correlation)) %>% 
+  arrange(desc(corr)) %>% select(feature) %>% unique(),20)
+gimmerizeds$feature[which(gimmerizeds$feature %in% falsify)]
+```
+
+
+```{r,fig.align="center",fig.width=8,fig.height=10}
+nellight <- jarklin %>% correlate(target = classe__C)
+nellight %>% plot_correlation_funnel(interactive = T,limits = c(-0.5,0.5))
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# this section is to find the top features for this classe which are not correlated with others
+innous <- head(nellight %>% mutate(corr = abs(correlation)) %>% 
+  arrange(desc(corr)) %>% select(feature) %>% unique(),20)
+innous$feature[which(innous$feature %in% falsify)]
+```
+
+```{r,fig.align="center",fig.width=8,fig.height=10}
+idiost <- jarklin %>% correlate(target = classe__D)
+idiost %>% plot_correlation_funnel(interactive = T,limits = c(-0.5,0.5))
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# this section is to find the top features for this classe which are not correlated with others
+animepolis <- head(idiost %>% mutate(corr = abs(correlation)) %>% 
+  arrange(desc(corr)) %>% select(feature) %>% unique(),20)
+hureaddiss$feature[which(hureaddiss$feature %in% falsify)]
+```
+
+
+```{r,fig.align="center",fig.width=8,fig.height=10}
+stcomperved <- jarklin %>% correlate(target = classe__E)
+stcomperved %>% plot_correlation_funnel(interactive = T,limits = c(-0.5,0.5))
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+# this section is to find the top features for this classe which are not correlated with others
+plakill <- head(stcomperved %>% mutate(corr = abs(correlation)) %>% 
+  arrange(desc(corr)) %>% select(feature) %>% unique(),20)
+plakill$feature[which(plakill$feature %in% falsify)]
+```
+
+
+```{r}
+#subseting embox
+sislaf <- c("magnet_arm_x", "pitch_forearm" , "magnet_dumbbell_y", 
+           "roll_forearm", "gyros_dumbbell_y") 
+willary <- c("magnet_dumbbell_y", "magnet_dumbbell_x" , "roll_dumbbell" , 
+           "magnet_belt_y" , "accel_dumbbell_x" )
+willarya <- c("magnet_dumbbell_y", "roll_dumbbell" , "accel_dumbbell_y" , 
+           "magnet_dumbbell_x", "magnet_dumbbell_z")
+willaryb <- c("pitch_forearm" , "magnet_arm_y" , "magnet_forearm_x",
+           "accel_dumbbell_y", "accel_forearm_x")
+willaryc <- c("magnet_belt_y" , "magnet_belt_z" , "roll_belt", 
+           "gyros_belt_z" , "magnet_dumbbell_y")
+willaryd <- character()
+for(c in c(sislaf,willary,willarya,willaryb,willaryc)){
+  willaryd <- union(willaryd, c)
+}
+fevilsor <- embox %>% select(willaryd, classe)
+data.frame("arm" = sum(grepl("_arm",willaryd)), 
+           "forearm" = sum(grepl("_forearm",willaryd)),
+           "belt" = sum(grepl("_belt",willaryd)),
+           "dumbbell" = sum(grepl("_dumbbell",willaryd)))
+```
+
+```{r, fig.align="center",fig.height=15,fig.width=15}
+creably <- function(data, mapping, ...) {
+  ggplot(data = data, mapping=mapping) +
+    geom_density(..., alpha = 0.3)+scale_fill_brewer(palette="Set2") 
+}
+houshia <- function(data, mapping, ...) {
+  ggplot(data = data, mapping=mapping) +
+    geom_point(..., alpha = 0.1)+ scale_fill_brewer(palette="Set2") 
+}
+ggpairs(fevilsor, columns = 1:5,aes(color = classe),
+        lower = list(continuous = houshia),diag = list(continuous = creably))
+```
+
+```{r,fig.align="center",fig.height=15,fig.width=15}
+ggpairs(fevilsor, columns = 6:10,aes(color = classe),
+        lower = list(continuous = houshia),diag = list(continuous = creably))
+```
+
+```{r,fig.align="center",fig.height=15,fig.width=15}
+ggpairs(fevilsor, columns = 11:17,aes(color = classe),
+        lower = list(continuous = houshia),diag = list(continuous = creably))
+```
+
+```{r}
+mentincts <- cisum %>% select(willaryd,classe)
+byfoculous <- nmdbj %>% select(willaryd,classe)
+mentincts[,1:17] <- sapply(mentincts[,1:17],as.numeric)
+byfoculous[,1:17] <- sapply(byfoculous[,1:17],as.numeric)
+levels <- c("A", "B", "C", "D", "E")
+potander <- preProcess(mentincts[,-18],method = c("center","scale","BoxCox"))
+frantly <- predict(potander,select(mentincts,-classe))
+accurvey <- factor(mentincts$classe,levels=levels)
+molish <- predict(potander,select(byfoculous,-classe))
+expercity <- factor(byfoculous$classe,levels=levels)
+reardmener <- trainControl(method="cv", number=5)
+#CFtree
+chituthes <- train(x = frantly,y = accurvey, 
+                 method = "rpart", reardmener = reardmener)
+#RF
+inducilly <- train(x = frantly,y = accurvey, 
+                 method = "rf", reardmener = reardmener,verbose=FALSE, metric = "Accuracy")
+#GBM
+#taking too long
+asherictive <- train(x = frantly,y = accurvey, 
+                  method = "gbm",reardmener=reardmener, verbose=FALSE)
+#SVM
+strects <- svm(x = frantly,y = accurvey,
+                kernel = "polynomial", cost = 10)
+```
+
+```{r}
+confusionMatrix(predict(chituthes,molish),expercity)
+```
+
+```{r}
+confusionMatrix(predict(inducilly,molish),expercity)
+```
+
+```{r}
+plot(inducilly$finalModel,main="Error VS no of tree")
+```
+
+```{r}
+confusionMatrix(predict(asherictive,molish),expercity)
+```
+
+```{r}
+confusionMatrix(predict(strects,molish),expercity)
+```
+
+```{r}
+sclarint <- goink %>% select(willaryd,problem_id)
+xTest <- sclarint %>% select(willaryd)
+  
+result <- data.frame("problem_id" = goink$problem_id,
+                     "PREDICTION_RF" = predict(inducilly,xTest),
+                     "PREDICTION_GBM" = predict(asherictive,xTest),
+                     "PREDICTION_SVM" = predict(strects,xTest))
+result
+```
+
+```{r}
+mentincts2 <- tbl_df(cisum %>% 
+                      select(-eaux,
+                             -c(X,user_name, raw_timestamp_part_1, 
+                                raw_timestamp_part_2, cvtd_timestamp, 
+                                new_window,num_window)))
+xnxfrantly_2_qwert <- mentincts2 %>% select(-classe)
+xnxfrantly_2_qwert <- sapply(xnxfrantly_2_qwert,as.numeric)
+Ynxfrantly_2_qwertdfc <- factor(mentincts2$classe,levels=levels)  
+byfoculous2 <- tbl_df(nmdbj %>% 
+                      select(-eaux,
+                             -c(X,user_name, raw_timestamp_part_1, 
+                                raw_timestamp_part_2, cvtd_timestamp, 
+                                new_window,num_window)))
+molish2 <- byfoculous2 %>% select(-classe)
+molish2 <- sapply(molish2,as.numeric)
+expercity2 <- factor(byfoculous2$classe,levels=levels) 
+goinkF2 <- tbl_df(goink %>% 
+                      select(-eaux,
+                             -c(X,user_name, raw_timestamp_part_1, 
+                                raw_timestamp_part_2, cvtd_timestamp, 
+                                new_window,num_window)))
+xTest2 <- goinkF2 %>% select(-problem_id)
+xTest2 <- sapply(xTest2,as.numeric)
+pb_id <- byfoculous2$classe
+library(doParallel)
+ncores <- makeCluster(detectCores() - 1)
+registerDoParallel(cores=ncores)
+getDoParWorkers() 
+inducilly2 <- train(x = xnxfrantly_2_qwert,y = Ynxfrantly_2_qwertdfc, method = "rf", 
+                 metric = "Accuracy", 
+                 reardmener=trainControl(method = "cv", number = 4, 
+                                        p= 0.60, allowParallel = TRUE ))
+```
